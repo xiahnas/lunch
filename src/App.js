@@ -70,7 +70,7 @@ function App() {
 
   return (
     <div className="App" style={{ padding: 20 }} onClick={() => setHasInteracted(true)}>
-      <h1 style={{ textAlign: "center" }}>밴 셀렉터</h1>
+      <h1 style={{ textAlign: "center" }}>오점뭐(오늘 점심 뭐먹지 라는뜻ㅎ)</h1>
       <div
         style={{ display: "flex", justifyContent: "space-around", marginTop: 20 }}
       >
