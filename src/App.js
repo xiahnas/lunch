@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import "./App.css";
 
 function App() {
-  const [list, setList] = useState([]); // 전체 리스트 (초기 불러온 리스트 + 추가된 아이템 포함)
+  const [list, setList] = useState([]); // 전체 리스트
   const [available, setAvailable] = useState([]); // 선택 가능 리스트
   const [banned, setBanned] = useState([]); // 밴 목록
   const [selected, setSelected] = useState(null); // 현재 선택된 아이템
@@ -11,12 +11,10 @@ function App() {
   const [volume, setVolume] = useState(0.3);
   const audioRef = useRef(null);
   const [hasInteracted, setHasInteracted] = useState(false);
-  const [newItem, setNewItem] = useState(""); // 추가할 새 아이템 입력값
+  const [newItem, setNewItem] = useState(""); // 새 아이템 입력값
 
-  // localStorage 키 이름
   const STORAGE_KEY = "lunchAppData";
 
-  // localStorage에서 저장된 데이터 로드 또는 서버에서 list.txt 로드
   useEffect(() => {
     const savedData = localStorage.getItem(STORAGE_KEY);
     if (savedData) {
@@ -33,7 +31,6 @@ function App() {
     }
   }, []);
 
-  // list.txt 파일에서 기본 리스트 불러오기
   const loadFromTxt = () => {
     fetch("/list.txt")
       .then((res) => res.text())
@@ -49,7 +46,6 @@ function App() {
       });
   };
 
-  // 상태 변경시 localStorage 저장
   const saveToStorage = (listData, availableData, bannedData) => {
     const data = {
       list: listData,
@@ -59,21 +55,17 @@ function App() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   };
 
-  // 배경음악 및 볼륨 컨트롤
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume;
       if (bgmOn && hasInteracted) {
-        audioRef.current.play().catch((err) => {
-          console.log("Autoplay failed:", err);
-        });
+        audioRef.current.play().catch(() => {});
       } else {
         audioRef.current.pause();
       }
     }
   }, [bgmOn, volume, hasInteracted]);
 
-  // 밴 토글 (선택된 아이템을 available <-> banned 이동)
   const toggleBan = () => {
     if (!selected) return;
     if (available.includes(selected)) {
@@ -92,7 +84,6 @@ function App() {
     setSelected(null);
   };
 
-  // 무작위 선택
   const showRandom = () => {
     if (available.length === 0) return;
     const random = available[Math.floor(Math.random() * available.length)];
@@ -111,7 +102,6 @@ function App() {
     if (!hasInteracted) setHasInteracted(true);
   };
 
-  // 새 아이템 추가 함수
   const addNewItem = () => {
     const trimmed = newItem.trim();
     if (
@@ -129,14 +119,12 @@ function App() {
     }
   };
 
-  // 선택 가능 목록에서 선택 후 삭제 버튼 클릭 시 아이템 제거
   const removeAvailableItem = () => {
     if (!selected) return;
     if (!available.includes(selected)) return;
 
     const newList = list.filter((item) => item !== selected);
     const newAvailable = available.filter((item) => item !== selected);
-    // 밴 목록에는 없다고 가정 (만약 밴에도 있을 경우, 밴도 필터링 필요)
     const newBanned = banned.filter((item) => item !== selected);
 
     setList(newList);
@@ -152,18 +140,9 @@ function App() {
       style={{ padding: 20 }}
       onClick={() => setHasInteracted(true)}
     >
-      <h1 style={{ textAlign: "center" }}>
-        오점뭐(오늘 점심 뭐먹지 라는뜻ㅎ)
-      </h1>
+      <h1 style={{ textAlign: "center" }}>오점뭐(오늘 점심 뭐먹지 라는뜻ㅎ)</h1>
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-around",
-          marginTop: 20,
-        }}
-      >
-        {/* 선택 가능 영역 */}
+      <div style={{ display: "flex", justifyContent: "space-around", marginTop: 20 }}>
         <div style={{ width: "30%" }}>
           <h2>선택 가능</h2>
           <div
@@ -191,8 +170,6 @@ function App() {
               </div>
             ))}
           </div>
-
-          {/* 선택 가능 리스트에서 선택 후 제거 버튼 */}
           <button
             onClick={removeAvailableItem}
             disabled={!selected || !available.includes(selected)}
@@ -204,7 +181,9 @@ function App() {
               borderRadius: 4,
               padding: "6px 12px",
               cursor:
-                selected && available.includes(selected) ? "pointer" : "not-allowed",
+                selected && available.includes(selected)
+                  ? "pointer"
+                  : "not-allowed",
             }}
             title="선택 가능 리스트에서 항목 제거"
           >
@@ -212,7 +191,6 @@ function App() {
           </button>
         </div>
 
-        {/* 밴 목록 영역 */}
         <div style={{ width: "30%" }}>
           <h2>밴 목록</h2>
           <div
@@ -242,7 +220,6 @@ function App() {
           </div>
         </div>
 
-        {/* 리스트 추가 UI */}
         <div style={{ width: "30%" }}>
           <h2>리스트 추가</h2>
           <input
@@ -282,28 +259,11 @@ function App() {
 
       <div style={{ textAlign: "center", marginTop: 20 }}>
         <button onClick={showRandom} style={{ marginRight: 10 }}>
-          무작위 선택
+          오늘 점심 뭘까?
         </button>
-        <button onClick={toggleBan} style={{ marginRight: 10 }}>
-          밴/복귀
+        <button onClick={toggleBan} disabled={!selected}>
+          {available.includes(selected) ? "밴 하기" : "밴 해제"}
         </button>
-        <button onClick={toggleBgm} style={{ marginRight: 20 }}>
-          {bgmOn ? "BGM 끄기" : "BGM 켜기"}
-        </button>
-        <label
-          style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
-        >
-          볼륨
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.01}
-            value={volume}
-            onChange={onVolumeChange}
-            style={{ verticalAlign: "middle" }}
-          />
-        </label>
       </div>
 
       {popupOpen && (
@@ -331,15 +291,53 @@ function App() {
               fontWeight: "bold",
               cursor: "default",
               userSelect: "none",
+              minWidth: 200,
+              textAlign: "center",
             }}
             onClick={(e) => e.stopPropagation()}
           >
+            <div
+              style={{
+                fontSize: 20,
+                fontWeight: "normal",
+                marginBottom: 20,
+                borderBottom: "1px solid #ccc",
+                paddingBottom: 10,
+              }}
+            >
+              오늘의 픽
+            </div>
             {selected}
           </div>
         </div>
       )}
 
-      <audio ref={audioRef} src="/bgm.mp3" loop preload="auto" />
+      {/* BGM 컨트롤 */}
+      <div style={{ marginTop: 20, textAlign: "center" }}>
+        <button
+          onClick={toggleBgm}
+          style={{ marginRight: 10, padding: "5px 10px", cursor: "pointer" }}
+        >
+          {bgmOn ? "BGM 끄기" : "BGM 켜기"}
+        </button>
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          value={volume}
+          onChange={onVolumeChange}
+          style={{ verticalAlign: "middle" }}
+        />
+      </div>
+
+      {/* 배경음악 오디오 태그 (src는 실제 파일 경로로 바꿔주세요) */}
+      <audio
+        ref={audioRef}
+        src="/bgm.mp3"
+        loop
+        preload="auto"
+      />
     </div>
   );
 }
