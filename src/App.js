@@ -7,9 +7,10 @@ function App() {
   const [banned, setBanned] = useState([]);
   const [selected, setSelected] = useState(null);
   const [popupOpen, setPopupOpen] = useState(false);
-  const [bgmOn, setBgmOn] = useState(true); // 기본 ON
-  const [volume, setVolume] = useState(0.5); // 기본 50% 볼륨
+  const [bgmOn, setBgmOn] = useState(true);
+  const [volume, setVolume] = useState(0.3);
   const audioRef = useRef(null);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   useEffect(() => {
     fetch("/list.txt")
@@ -25,26 +26,17 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const audio = audioRef.current;
-
-    if (audio) {
-      audio.volume = volume;
-      audio.muted = false;
-
-      if (bgmOn) {
-        setTimeout(() => {
-          const playPromise = audio.play();
-          if (playPromise !== undefined) {
-            playPromise.catch((err) => {
-              console.warn("자동재생 실패 (브라우저 제한 가능):", err);
-            });
-          }
-        }, 100); // 약간의 딜레이 후 play()
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+      if (bgmOn && hasInteracted) {
+        audioRef.current.play().catch((err) => {
+          console.log("Autoplay failed:", err);
+        });
       } else {
-        audio.pause();
+        audioRef.current.pause();
       }
     }
-  }, [bgmOn, volume]);
+  }, [bgmOn, volume, hasInteracted]);
 
   const toggleBan = () => {
     if (!selected) return;
@@ -63,20 +55,22 @@ function App() {
     const random = available[Math.floor(Math.random() * available.length)];
     setSelected(random);
     setPopupOpen(true);
+    if (!hasInteracted) setHasInteracted(true);
   };
 
   const toggleBgm = () => {
     setBgmOn((prev) => !prev);
+    if (!hasInteracted) setHasInteracted(true);
   };
 
   const onVolumeChange = (e) => {
     setVolume(parseFloat(e.target.value));
+    if (!hasInteracted) setHasInteracted(true);
   };
 
   return (
-    <div className="App" style={{ padding: 20 }}>
+    <div className="App" style={{ padding: 20 }} onClick={() => setHasInteracted(true)}>
       <h1 style={{ textAlign: "center" }}>밴 셀렉터</h1>
-
       <div
         style={{ display: "flex", justifyContent: "space-around", marginTop: 20 }}
       >
@@ -185,12 +179,10 @@ function App() {
         </div>
       )}
 
-      {/* 오디오 태그: 자동재생은 JS에서 처리 */}
       <audio
         ref={audioRef}
         src="/bgm.mp3"
         loop
-        preload="auto"
       />
     </div>
   );
